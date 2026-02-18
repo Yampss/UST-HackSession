@@ -1,15 +1,13 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from fastapi import FastAPI, HTTPException
 import subprocess
 
+app = FastAPI()
 TOKEN = "123"
 
-class H(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if f"token={TOKEN}" in self.path:
-            subprocess.run(["bash", "maintenance.sh"]) 
-            self.send_response(200)
-            self.wfile.write(b"Done")
-        else:
-            self.send_response(403)
+@app.get("/hook")
+def trigger(token: str):
+    if token != TOKEN:
+        raise HTTPException(status_code=403)
 
-HTTPServer(("0.0.0.0", 8000), H).serve_forever()
+    subprocess.run(["bash", "maintenance.sh"])  
+    return {"status": "done"}
